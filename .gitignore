@@ -1,5 +1,5 @@
 # Data
-DATA/IXI*
+IXI/DATA/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
