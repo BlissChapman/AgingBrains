@@ -1,4 +1,5 @@
 from models.UTKFace.age_classifier import AgeClassifier
+from utils import device
 
 # parser = argparse.ArgumentParser(description='VAE MNIST Example')
 # parser.add_argument('--batch-size', type=int, default=128, metavar='N',
@@ -15,4 +16,5 @@ from models.UTKFace.age_classifier import AgeClassifier
 # args = parser.parse_args()
 
 model = AgeClassifier()
+model = model.to(device)
 model.train_model(num_epochs=10, model_output_path="model.pt")
