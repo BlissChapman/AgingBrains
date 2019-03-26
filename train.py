@@ -17,4 +17,4 @@ from utils import device
 
 model = AgeClassifier()
 model = model.to(device)
-model.train_model(num_epochs=1000, model_output_path="model.pt")
+model.train_model(num_epochs=1000, model_output_path="model.pt", log_interval=1)

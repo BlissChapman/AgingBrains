@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch
 from torch import nn, optim
 from torch.autograd import Variable, grad
@@ -72,7 +74,7 @@ class AgeClassifier(nn.Module):
         for epoch in range(1, num_epochs+1):
             self.train()
             sum_train_loss = self._train_epoch_with_loader(train_loader)
-            print("EPOCH {0:10d} AVG AGE ESTIMATION ERROR: {1:.2f}".format(epoch, sqrt(sum_train_loss/len(train_loader))))
+            print("EPOCH {0:10d} AVG AGE ESTIMATION ERROR: {1:.2f}".format(epoch, np.sqrt(sum_train_loss/len(train_loader))))
         
             if epoch % log_interval == 0:
                 torch.save(self.state_dict(), output_model_name)
