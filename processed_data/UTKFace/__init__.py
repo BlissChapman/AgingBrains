@@ -26,10 +26,12 @@ class Dataset(data.Dataset):
     def __getitem__(self, idx):
         img_name = os.path.join(self.root_dir,
                                 self.filenames[idx])
-        image = io.imread(img_name, as_gray=True)
+        image = io.imread(img_name, as_grey=True).reshape(200, 200, 1)
         
         if self.transform:
             image = self.transform(image).float()
+        else:
+            image = torch.Tensor(image).float()
         
         match_obj = re.search('/(\d+)_', img_name)
         age = np.array(int(match_obj.group(1)))
