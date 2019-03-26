@@ -38,4 +38,4 @@ class Dataset(data.Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        return data[idx]
+        return self.data[idx]
