@@ -77,6 +77,6 @@ class AgeClassifier(nn.Module):
             print("EPOCH {0:10d} AVG AGE ESTIMATION ERROR: {1:.2f}".format(epoch, np.sqrt(sum_train_loss/len(train_loader))))
         
             if epoch % log_interval == 0:
-                torch.save(self.state_dict(), output_model_name)
+                torch.save(self.state_dict(), model_output_path)
                 self.eval()
 
