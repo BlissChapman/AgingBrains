@@ -15,4 +15,4 @@ from models.UTKFace.age_classifier import AgeClassifier
 # args = parser.parse_args()
 
 model = AgeClassifier()
-model.train_model(num_epochs=10, output_model_name="model.pt")
+model.train_model(num_epochs=10, model_output_path="model.pt")

@@ -26,7 +26,7 @@ class Dataset(data.Dataset):
     def __getitem__(self, idx):
         img_name = os.path.join(self.root_dir,
                                 self.filenames[idx])
-        image = io.imread(img_name, as_grey=True).reshape(200, 200, 1)
+        image = io.imread(img_name, as_grey=True).reshape(1, 200, 200)
         
         if self.transform:
             image = self.transform(image).float()

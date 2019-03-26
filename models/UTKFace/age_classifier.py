@@ -30,15 +30,10 @@ class AgeClassifier(nn.Module):
             nn.BatchNorm2d(128),
             nn.ReLU(),
 
-            # (46, 46) -> (22, 22)
-            nn.Conv2d(64, 128, kernel_size=(4, 4), stride=2, bias=False),
-            nn.BatchNorm2d(128),
-            nn.ReLU(),
-
             # (22, 22) -> (10, 10)
             nn.Conv2d(128, 256, kernel_size=(4, 4), stride=2, bias=False),
             nn.BatchNorm2d(256),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
         # (10, 10) -> 1
@@ -47,6 +42,7 @@ class AgeClassifier(nn.Module):
 
     def forward(self, x):
         x = self.conv_layers(x)
+        x = x.view(x.shape[0], x.shape[1]*x.shape[2]*x.shape[3])
         x = self.fc1(x)
         return x
     
@@ -57,7 +53,7 @@ class AgeClassifier(nn.Module):
             torch.cuda.empty_cache() 
             
             data_batch = Variable(data_batch.to(device))
-            label_batch = Variable(label_batch.to(device))
+            label_batch = Variable(label_batch.to(device).float())
             
             self.zero_grad()
             label_predictions_batch = self(data_batch)
@@ -68,7 +64,7 @@ class AgeClassifier(nn.Module):
             
         return sum_train_loss
 
-    def train_model(self, num_epochs, output_model_name, log_interval=10):
+    def train_model(self, num_epochs, model_output_path, log_interval=10):
         train_loader = torch.utils.data.DataLoader(
             UTKFace.Dataset(train=True),
             batch_size=64, shuffle=True)
@@ -79,7 +75,6 @@ class AgeClassifier(nn.Module):
             print("EPOCH {0:10d} SUM TRAIN LOSS: {1:.2f}".format(epoch, sum_train_loss))
         
             if epoch % log_interval == 0:
+                torch.save(self.state_dict(), output_model_name)
                 self.eval()
-                print("HERE")
-
 
