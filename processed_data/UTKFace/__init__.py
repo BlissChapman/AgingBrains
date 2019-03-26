@@ -35,7 +35,7 @@ class Dataset(data.Dataset):
             self.data.append((image, age))
 
     def __len__(self):
-        return len(self.filenames)
+        return len(self.data)
 
     def __getitem__(self, idx):
         return data[idx]
