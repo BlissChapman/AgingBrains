@@ -26,10 +26,10 @@ class Dataset(data.Dataset):
     def __getitem__(self, idx):
         img_name = os.path.join(self.root_dir,
                                 self.filenames[idx])
-        image = io.imread(img_name)
+        image = io.imread(img_name, as_gray=True)
         
         if self.transform:
-            image = self.transform(image)
+            image = self.transform(image).float()
         
         match_obj = re.search('/(\d+)_', img_name)
         age = np.array(int(match_obj.group(1)))
