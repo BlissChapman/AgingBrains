@@ -21,7 +21,7 @@ class Model(nn.Module):
 
         # (W−F+2P)/S+1
         
-        # 1x200x200
+        # 1x128x128
         self.conv1 = nn.Conv2d(1, 64, kernel_size=(5,5), stride=2, padding=2)
         self.conv2 = nn.Conv2d(64, 128, kernel_size=(5,5), stride=2, padding=2)
         self.conv3 = nn.Conv2d(128, 256, kernel_size=(5,5), stride=2, padding=2)
@@ -35,7 +35,8 @@ class Model(nn.Module):
         self.deconv2 = nn.ConvTranspose2d(512, 256, kernel_size=(5,5), stride=2, padding=2, output_padding=1)
         self.deconv3 = nn.ConvTranspose2d(256, 128, kernel_size=(5,5), stride=2, padding=2, output_padding=1)
         self.deconv4 = nn.ConvTranspose2d(128, 64, kernel_size=(5,5), stride=2, padding=2, output_padding=1)
-        self.deconv5 = nn.ConvTranspose2d(64, 1, kernel_size=1)
+        self.deconv5 = nn.ConvTranspose2d(64, 32, kernel_size=(5,5), stride=1, padding=2)
+        self.deconv6 = nn.ConvTranspose2d(32, 1, kernel_size=1)
 
     def encode(self, x):
         x = x.view(-1, 1, 128, 128)
@@ -58,8 +59,9 @@ class Model(nn.Module):
         h8 = F.relu(self.deconv2(h7))
         h9 = F.relu(self.deconv3(h8))
         h10 = F.relu(self.deconv4(h9))
-        h11 = self.deconv5(h10)
-        return torch.sigmoid(h11)
+        h11 = F.relu(self.deconv5(h10))
+        h12 = self.deconv6(h11)
+        return torch.sigmoid(h12)
 
     def forward(self, x):
         mu, logvar = self.encode(x)
