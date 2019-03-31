@@ -8,7 +8,7 @@ import re
 class Dataset(data.Dataset):
     """Face ages dataset."""
 
-    def __init__(self, train, transform=None):
+    def __init__(self, train):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -17,17 +17,22 @@ class Dataset(data.Dataset):
         """
         self.root_dir = 'processed_data/UTKFace/images/'
         self.train = train
-        self.transform = transform
-
+        
+        # Load all images into memory
         self.data = []
-        for filename in os.listdir(self.root_dir):
+        files = os.listdir(self.root_dir)
+        split_idx = int(len(files) * 0.8)
+        subset = files[:split_idx] if self.train else files[split_idx:]
+        for filename in subset:
             img_name = os.path.join(self.root_dir, filename)
-            image = io.imread(img_name, as_grey=True).reshape(1, 200,200)
+            image = io.imread(img_name)[:,:, 0]
             
-            if self.transform:
-                image = self.transform(image).float()
-            else:
-                image = torch.Tensor(image).float()
+            # To PyTorch Tensor
+            # numpy image: H x W
+            # torch image: C X H X W
+            image = np.expand_dims(image, axis=0)
+            
+            image = torch.from_numpy(image).float() / 255
 
             match_obj = re.search('/(\d+)_', img_name)
             age = np.array(int(match_obj.group(1)))

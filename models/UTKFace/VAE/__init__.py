@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 import copy
 import numpy as np
 
-class VAE(nn.Module):
+class Model(nn.Module):
     def __init__(self):
-        super(VAE, self).__init__()
+        super(Model, self).__init__()
 
         # 1x200x200
         self.conv1 = nn.Conv2d(1, 10, kernel_size=(20,20), stride=2)
