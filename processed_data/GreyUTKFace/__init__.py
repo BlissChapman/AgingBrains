@@ -15,7 +15,7 @@ class Dataset(data.Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.root_dir = 'processed_data/UTKFace/images/'
+        self.root_dir = 'processed_data/GreyUTKFace/images/'
         self.train = train
         
         # Load all images into memory
@@ -25,7 +25,7 @@ class Dataset(data.Dataset):
         subset = files[:split_idx] if self.train else files[split_idx:]
         for filename in subset:
             img_name = os.path.join(self.root_dir, filename)
-            image = io.imread(img_name)[:,:, 0]
+            image = io.imread(img_name)
             
             # To PyTorch Tensor
             # numpy image: H x W

@@ -9,47 +9,42 @@ from torchvision.utils import save_image
 import matplotlib.pyplot as plt
 import copy
 import numpy as np
+from pdb import set_trace
 
 class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
+        
+        self.input_w = 128
+        self.input_h = 128
+        self.latent_space = 50
 
         # (W−F+2P)/S+1
         
         # 1x200x200
-        self.conv1 = nn.Conv2d(1, 8, kernel_size=(10,10), stride=2)
-        # (200 - 10) / 2 + 1 = 95 + 1 = 96
-        # 8x96x96
-        self.conv2 = nn.Conv2d(8, 16, kernel_size=(8,8), stride=2)
-        # (96 - 8) / 2 + 1 = 44 + 1 = 45
-        # 16x45x45
-        self.conv3 = nn.Conv2d(16, 32, kernel_size=(5,5), stride=2)
-        # (45 - 5) / 2 + 1 = 20 + 1 = 21
-        # 32x21x21
-        self.conv4 = nn.Conv2d(32, 64, kernel_size=(3,3), stride=1)
-        # (21 - 3) / 1 + 1 = 18 + 1 = 19
-        # 64x19x19
-        self.conv5 = nn.Conv2d(64, 128, kernel_size=(3,3), stride=2)
-        # (19 - 3) / 2 + 1 = 8 + 1 = 9
-        # 128 x 9 x 9
-        self.mu = nn.Linear(128 * 9 * 9, 32)
-        self.logvar = nn.Linear(128 * 9 * 9, 32)
-        self.fc1 = nn.Linear(32, 128 * 9 * 9)
-        self.deconv1 = nn.ConvTranspose2d(128, 64, kernel_size=(3,3), stride=2)
-        self.deconv2 = nn.ConvTranspose2d(64, 32, kernel_size=(3,3), stride=1)
-        self.deconv3 = nn.ConvTranspose2d(32, 16, kernel_size=(5,5), stride=2)
-        self.deconv4 = nn.ConvTranspose2d(16, 8, kernel_size=(8,8), stride=2)
-        self.deconv5 = nn.ConvTranspose2d(8, 1, kernel_size=(10,10), stride=2)
+        self.conv1 = nn.Conv2d(1, 64, kernel_size=(5,5), stride=2, padding=2)
+        self.conv2 = nn.Conv2d(64, 128, kernel_size=(5,5), stride=2, padding=2)
+        self.conv3 = nn.Conv2d(128, 256, kernel_size=(5,5), stride=2, padding=2)
+        self.conv4 = nn.Conv2d(256, 512, kernel_size=(5,5), stride=2, padding=2)
+        
+        self.fc_mu = nn.Linear(512 * 8 * 8, self.latent_space)
+        self.fc_logvar = nn.Linear(512 * 8 * 8, self.latent_space)
+        self.fc_reshape = nn.Linear(self.latent_space, 1024 * 8 * 8)
+        
+        self.deconv1 = nn.ConvTranspose2d(1024, 512, kernel_size=(5,5), stride=2, padding=2, output_padding=1)
+        self.deconv2 = nn.ConvTranspose2d(512, 256, kernel_size=(5,5), stride=2, padding=2, output_padding=1)
+        self.deconv3 = nn.ConvTranspose2d(256, 128, kernel_size=(5,5), stride=2, padding=2, output_padding=1)
+        self.deconv4 = nn.ConvTranspose2d(128, 64, kernel_size=(5,5), stride=2, padding=2, output_padding=1)
+        self.deconv5 = nn.ConvTranspose2d(64, 1, kernel_size=1)
 
     def encode(self, x):
-        x = x.view(-1, 1, 200, 200)
+        x = x.view(-1, 1, 128, 128)
         h1 = F.relu(self.conv1(x))
         h2 = F.relu(self.conv2(h1))
         h3 = F.relu(self.conv3(h2))
         h4 = F.relu(self.conv4(h3))
-        h5 = F.relu(self.conv5(h4))
-        h5 = h5.view(-1, 128 * 9 * 9)
-        return self.mu(h5), self.logvar(h5)
+        h4 = h4.view(-1, 512 * 8 * 8)
+        return self.fc_mu(h4), self.fc_logvar(h4)
 
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5*logvar)
@@ -57,12 +52,12 @@ class Model(nn.Module):
         return mu + eps*std
 
     def decode(self, z):
-        h6 = F.relu(self.fc1(z))
-        h6 = h6.view(-1, 128, 9, 9)
-        h7 = self.deconv1(h6)
-        h8 = self.deconv2(h7)
-        h9 = self.deconv3(h8)
-        h10 = self.deconv4(h9)
+        h6 = F.relu(self.fc_reshape(z))
+        h6 = h6.view(-1, 1024, 8, 8)
+        h7 = F.relu(self.deconv1(h6))
+        h8 = F.relu(self.deconv2(h7))
+        h9 = F.relu(self.deconv3(h8))
+        h10 = F.relu(self.deconv4(h9))
         h11 = self.deconv5(h10)
         return torch.sigmoid(h11)
 
