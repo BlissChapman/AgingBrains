@@ -7,6 +7,7 @@ from models.GreyUTKFace import VAE
 import os
 from processed_data import GreyUTKFace
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 
 import argparse
 
@@ -18,16 +19,16 @@ startTime = datetime.now()
 parser = argparse.ArgumentParser(description='Face VAE')
 parser.add_argument('--epochs', type=int, default=10, metavar='N',
                     help='number of epochs to train (default: 10)')
-parser.add_argument('--log-interval', type=int, default=10, metavar='N',
-                    help='how many batches to wait before logging training status')
+parser.add_argument('--sample', action='store_true', default=False, 
+                    help='Sample a small set of the data to make it run faster. Useful for debugging')
 args = parser.parse_args()
 
 # Set directory
 model_dir = 'models/GreyUTKFace/VAE/'
 
 # Load training data
-train_dataset = GreyUTKFace.Dataset(train=True)
-test_dataset = GreyUTKFace.Dataset(train=False)
+train_dataset = GreyUTKFace.Dataset(train=True, sample=args.sample)
+test_dataset = GreyUTKFace.Dataset(train=False, sample=args.sample)
 
 train_loader = torch.utils.data.DataLoader(
     train_dataset,
@@ -54,6 +55,11 @@ if os.path.exists(weight_path):
 else:
     print('Starting model from scratch')
     
+# Reset results dir
+import shutil
+shutil.rmtree(model_dir + 'results/')
+os.makedirs(model_dir + 'results/')
+
 # Train
 for epoch in range(1, args.epochs + 1):
     train_loss = VAE.train(model, train_loader, device, optimizer, epoch)
@@ -71,8 +77,11 @@ for epoch in range(1, args.epochs + 1):
 torch.save(model.state_dict(), weight_path)
 
 if len(train_losses) > 1:
-    plt.plot(np.arange(len(train_losses)), train_losses)
-    plt.plot(np.arange(len(test_losses)), test_losses)
-    plt.show()
+    plt.figure()
+    plt.plot(np.arange(len(train_losses)), train_losses, label='train')
+    plt.plot(np.arange(len(test_losses)), test_losses, label='test')
+    plt.xlabel('epochs')
+    plt.ylabel('loss')
+    plt.savefig(model_dir + 'results/training.png')
 
 print('\nTime elasped: ', datetime.now() - startTime)

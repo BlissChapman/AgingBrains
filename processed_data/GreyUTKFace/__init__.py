@@ -23,7 +23,7 @@ class Dataset(data.Dataset):
         
         return image, age
 
-    def __init__(self, train):
+    def __init__(self, train, sample=True):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -36,6 +36,8 @@ class Dataset(data.Dataset):
         # Load all images into memory
         self.data = []
         files = os.listdir(self.root_dir)
+        if sample:
+            files = files[:1000]
         split_idx = int(len(files) * 0.8)
         self.subset = files[:split_idx] if self.train else files[split_idx:]
         
