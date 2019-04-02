@@ -5,43 +5,44 @@ from torch import nn, optim
 from torch.autograd import Variable, grad
 from torch.nn import functional as F
 
-from processed_data import UTKFace
+from processed_data import GreyUTKFace
 from utils import device
 
 
-class AgeClassifier(nn.Module):
+class Model(nn.Module):
     
     def __init__(self):
-        super(AgeClassifier, self).__init__()
+        super(Model, self).__init__()
+        
+        self.dir = 'models/GreyUTKFace/AgeClassifier/'
         
         self.conv_layers = nn.Sequential(
 
             # (W−F+2P)/S+1
-            # (200, 200) -> (97, 97)
-            nn.Conv2d(1, 32, kernel_size=(8, 8), stride=2, bias=False),
-            nn.BatchNorm2d(32),
+            # (128, 128) -> (63, 63)
+            nn.Conv2d(1, 32, kernel_size=(4, 4), stride=2),
             nn.ReLU(),
 
-            # (97, 97) -> (46, 46)
-            nn.Conv2d(32, 64, kernel_size=(7, 7), stride=2, bias=False),
-            nn.BatchNorm2d(64),
+            # (63, 63) -> (31, 31)
+            nn.Conv2d(32, 64, kernel_size=(3, 3), stride=2),
             nn.ReLU(),
 
-            # (46, 46) -> (22, 22)
-            nn.Conv2d(64, 128, kernel_size=(4, 4), stride=2, bias=False),
-            nn.BatchNorm2d(128),
+            # (31, 31) -> (15, 15)
+            nn.Conv2d(64, 128, kernel_size=(3, 3), stride=2),
             nn.ReLU(),
 
-            # (22, 22) -> (10, 10)
-            nn.Conv2d(128, 256, kernel_size=(4, 4), stride=2, bias=False),
-            nn.BatchNorm2d(256),
+            # (15, 15) -> (7, 7)
+            nn.Conv2d(128, 256, kernel_size=(3, 3), stride=2),
             nn.ReLU(),
         )
 
-        # (10, 10) -> 1
-        self.fc1 = nn.Linear(10*10*256, 1)
-        self.optimizer = optim.Adam(self.parameters(), lr=3e-4)
+        # (7, 7) -> 1
+        self.fc1 = nn.Linear(7*7*256, 1)
+        self.optimizer = optim.Adam(self.parameters(), lr=1e-5)
 
+    def load(self):
+        self.load_state_dict(torch.load(self.dir + 'weights/model.pt'))
+        
     def forward(self, x):
         x = self.conv_layers(x)
         x = x.view(x.shape[0], x.shape[1]*x.shape[2]*x.shape[3])
@@ -66,17 +67,19 @@ class AgeClassifier(nn.Module):
             
         return sum_train_loss
 
-    def train_model(self, num_epochs, model_output_path, log_interval=10):
+    def train_model(self, num_epochs, sample=False, log_interval=10):
+        
+        print("Loading dataset...")
         train_loader = torch.utils.data.DataLoader(
-            UTKFace.Dataset(train=True),
-            batch_size=64, shuffle=True)
+            GreyUTKFace.Dataset(train=True, sample=sample),
+            batch_size=1, shuffle=True)
 
+        print("Training...")
         for epoch in range(1, num_epochs+1):
             self.train()
             sum_train_loss = self._train_epoch_with_loader(train_loader)
-            print("EPOCH {0:10d} AVG AGE ESTIMATION ERROR: {1:.2f}".format(epoch, np.sqrt(sum_train_loss/len(train_loader))))
+            
+            print("EPOCH {0:10d} AVG AGE ESTIMATION ERROR: {1:.4f}".format(epoch, np.sqrt(sum_train_loss/len(train_loader))))
         
             if epoch % log_interval == 0:
-                torch.save(self.state_dict(), model_output_path)
-                self.eval()
-
+                torch.save(self.state_dict(), self.dir+'weights/model.pt')
