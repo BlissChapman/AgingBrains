@@ -64,7 +64,7 @@ class BaseModel(nn.Module):
         self.epochs_trained += 1
         self.to(self.device)
         
-    def evaluate(self, epoch):
+    def evaluate(self):
         """
         Evaluates the model from the testing data and saves the results into the results path
         """

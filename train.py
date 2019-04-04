@@ -45,7 +45,7 @@ for e in range(1, args.epochs + 1):
     print('Train loss: {}'.format(train_loss))
     test_loss = model.test(sample=args.sample)
     print('Test loss: {}'.format(test_loss))    
-    model.evaluate(e)
+    model.evaluate()
     
     if e % 5 == 0 and e > 0:
         model.save()

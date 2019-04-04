@@ -117,8 +117,8 @@ class Model(BaseModel):
         test_loss /= len(test_loader.dataset)
         return test_loss
         
-    def evaluate(self, epoch):
-        super().evaluate(epoch)
+    def evaluate(self):
+        super().evaluate()
         
         self.eval()
         test_loader = self.test_loader(sample=False)
@@ -131,7 +131,7 @@ class Model(BaseModel):
             comparison = torch.cat([data[:n],
                                   recon_batch.view(self._batch_size, 1, self.Dataset.width, self.Dataset.height)[:n]])
             save_image(comparison.cpu(), 
-                       self._results_path + 'reconstruction_' + str(epoch) + '.png', nrow=n)
+                       self._results_path + 'reconstruction_' + str(self.epochs_trained) + '.png', nrow=n)
             break
         
         # Generate new data
@@ -139,4 +139,4 @@ class Model(BaseModel):
             sample = torch.randn(64, self.latent_space).to(device)
             sample = self.decode(sample).cpu()
             save_image(sample.view(64, 1, self.Dataset.width, self.Dataset.height),
-                       self._results_path + 'sample_' + str(epoch) + '.png')
+                       self._results_path + 'sample_' + str(self.epochs_trained) + '.png')
