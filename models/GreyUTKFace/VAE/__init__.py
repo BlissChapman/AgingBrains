@@ -26,6 +26,8 @@ class Model(nn.Module):
         self.latent_space = 50
 
         self.dir = 'models/GreyUTKFace/VAE/'
+        
+        self.epochs_trained = 0
 
         # (W−F+2P)/S+1
         # 1x128x128
@@ -58,6 +60,13 @@ class Model(nn.Module):
         
     def load(self):
         self.load_state_dict(torch.load(self.dir + 'weights/model.pt'))
+        with open(self.dir + 'weights/epochs_trained.txt', 'r') as f:
+            self.epochs_trained = int(f.read())
+            
+    def save(self):
+        torch.save(self.state_dict(), self.dir + 'weights/model.pt')
+        with open(self.dir + 'weights/epochs_trained.txt', 'w') as f:
+            f.write(str(self.epochs_trained))
         
     def encode(self, x):
         out = x.view(-1, 1, 128, 128)
@@ -115,6 +124,10 @@ class Model(nn.Module):
             GreyUTKFace.Dataset(train=True, sample=sample),
             batch_size=128, shuffle=True)
         
+        test_loader = torch.utils.data.DataLoader(
+            GreyUTKFace.Dataset(train=False, sample=sample),
+            batch_size=128, shuffle=True)
+        
         print("Training...")
         for epoch in range(1, num_epochs+1):
             self.train()
@@ -124,7 +137,7 @@ class Model(nn.Module):
             if epoch % log_interval == 0:
                 
                 # Plot reconstructions
-                for i, (data, _) in enumerate(train_loader):
+                for i, (data, _) in enumerate(test_loader):
                     data = data.to(device)
                     recon_batch, mu, logvar = self(data)
                     if i == 0:
@@ -136,4 +149,4 @@ class Model(nn.Module):
                         break
                     
                 # Save model weights
-                torch.save(self.state_dict(), 'models/GreyUTKFace/VAE/weights/model.pt')
+                self.save()
