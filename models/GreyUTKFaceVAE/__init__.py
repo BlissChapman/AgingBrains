@@ -1,13 +1,8 @@
-from __future__ import print_function
-import argparse
-import copy
-import matplotlib.pyplot as plt
 import numpy as np
 import shutil
 import torch
 import torch.utils.data
 
-from pdb import set_trace
 from processed_data import GreyUTKFace
 from torch import nn, optim
 from torch.nn import functional as F
@@ -15,19 +10,15 @@ from torchvision import datasets, transforms
 from torchvision.utils import save_image
 from utils import device
 
+from models import BaseModel
 
-class Model(nn.Module):
+
+class Model(BaseModel):
     
-    def __init__(self):
-        super(Model, self).__init__()
+    def __init__(self, device):
+        super().__init__('GreyUTKFaceVAE', GreyUTKFace.Dataset, device)
         
-        self.input_w = 128
-        self.input_h = 128
         self.latent_space = 50
-
-        self.dir = 'models/GreyUTKFace/VAE/'
-        
-        self.epochs_trained = 0
 
         # (W−F+2P)/S+1
         # 1x128x128
@@ -58,16 +49,6 @@ class Model(nn.Module):
         
         self.optimizer = optim.Adam(self.parameters(), lr=1e-3)
         
-    def load(self):
-        self.load_state_dict(torch.load(self.dir + 'weights/model.pt'))
-        with open(self.dir + 'weights/epochs_trained.txt', 'r') as f:
-            self.epochs_trained = int(f.read())
-            
-    def save(self):
-        torch.save(self.state_dict(), self.dir + 'weights/model.pt')
-        with open(self.dir + 'weights/epochs_trained.txt', 'w') as f:
-            f.write(str(self.epochs_trained))
-        
     def encode(self, x):
         out = x.view(-1, 1, 128, 128)
         out = self.convs(out)
@@ -93,7 +74,7 @@ class Model(nn.Module):
     def loss(self, recon_x, x, mu, logvar):
         
         # Reconstruction + KL divergence losses summed over all elements and batch
-        BCE = F.binary_cross_entropy(recon_x, x.view(-1, 1, self.input_w, self.input_h), reduction='sum')
+        BCE = F.binary_cross_entropy(recon_x, x.view(-1, 1, self.Dataset.width, self.Dataset.height), reduction='sum')
 
         # see Appendix B from VAE paper:
         # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
@@ -102,12 +83,16 @@ class Model(nn.Module):
         KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
         return BCE + KLD
-
-    def _train_epoch_with_loader(self, train_loader):
+    
+    def train_an_epoch(self, sample=False):
+        super().train_an_epoch()
+        
+        train_loader = self.train_loader(sample)
+        
         self.train()
         train_loss = 0
         for batch_idx, (data, _) in enumerate(train_loader):
-            data = data.to(device)
+            data = data.to(self.device)
             self.optimizer.zero_grad()
             recon_batch, mu, logvar = self(data)
             loss = self.loss(recon_batch, data, mu, logvar)
@@ -117,36 +102,41 @@ class Model(nn.Module):
         avg_loss = train_loss / len(train_loader.dataset)
         return avg_loss
     
-    def train_model(self, num_epochs, sample=False, log_interval=10):
+    def test(self, sample=False):
+        super().test()
         
-        print("Loading dataset...")
-        train_loader = torch.utils.data.DataLoader(
-            GreyUTKFace.Dataset(train=True, sample=sample),
-            batch_size=128, shuffle=True)
+        test_loader = self.test_loader(sample)
         
-        test_loader = torch.utils.data.DataLoader(
-            GreyUTKFace.Dataset(train=False, sample=sample),
-            batch_size=128, shuffle=True)
+        test_loss = 0
+        with torch.no_grad():
+            for i, (data, _) in enumerate(test_loader):
+                data = data.to(self.device)
+                recon_batch, mu, logvar = self(data)
+                test_loss += self.loss(recon_batch, data, mu, logvar).item()
+
+        test_loss /= len(test_loader.dataset)
+        return test_loss
         
-        print("Training...")
-        for epoch in range(1, num_epochs+1):
-            self.train()
-            avg_train_loss = self._train_epoch_with_loader(train_loader)
-            print("EPOCH {0:10d} AVG LOSS: {1}".format(epoch, avg_train_loss))
+    def evaluate(self, epoch):
+        super().evaluate(epoch)
         
-            if epoch % log_interval == 0:
-                
-                # Plot reconstructions
-                for i, (data, _) in enumerate(test_loader):
-                    data = data.to(device)
-                    recon_batch, mu, logvar = self(data)
-                    if i == 0:
-                        n = min(data.size(0), 8)
-                        comparison = torch.cat([data[:n],
-                                              recon_batch.view(128, 1, self.input_w, self.input_h)[:n]])
-                        save_image(comparison.cpu(), 
-                                   'models/GreyUTKFace/VAE/results/reconstruction_' + str(epoch) + '.png', nrow=n)
-                        break
-                    
-                # Save model weights
-                self.save()
+        self.eval()
+        test_loader = self.test_loader(sample=False)
+        
+        # Reconstructions
+        for data, _ in test_loader:
+            data = data.to(self.device)
+            recon_batch, mu, logvar = self(data)
+            n = min(data.size(0), 8)
+            comparison = torch.cat([data[:n],
+                                  recon_batch.view(self._batch_size, 1, self.Dataset.width, self.Dataset.height)[:n]])
+            save_image(comparison.cpu(), 
+                       self._results_path + 'reconstruction_' + str(epoch) + '.png', nrow=n)
+            break
+        
+        # Generate new data
+        with torch.no_grad():
+            sample = torch.randn(64, self.latent_space).to(device)
+            sample = self.decode(sample).cpu()
+            save_image(sample.view(64, 1, self.Dataset.width, self.Dataset.height),
+                       self._results_path + 'sample_' + str(epoch) + '.png')

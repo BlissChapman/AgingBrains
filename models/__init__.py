@@ -8,45 +8,77 @@ from torch import nn, optim
 from torch.nn import functional as F
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
-from utils import device
+
+import os
 
 class BaseModel(nn.Module):
-    def __init__(self, model_name, data_name):
+    def __init__(self, model_name, Dataset, device):
         """
-        Constructor for a model that initializes parameters by reading the config file
+        Constructor for a model
         """
         super().__init__()
         
         self.model_name = model_name
-        self.data_name = data_name
-        self.df = pd.read_csv('processed_data/{}/df.csv'.format(self.data_name))
+        self.Dataset = Dataset
+        self.device = device
+        self.epochs_trained = 0
+        self._batch_size = 128
+
         
-    
+    def save(self):
+        """
+        Save the model into the specified output path.
+        """
+        torch.save(self.state_dict(), self._model_path + 'weights/model.pt')
+        with open(self._model_path + 'weights/epochs_trained.txt', 'w') as f:
+            f.write(str(self.epochs_trained))
+            
+        
     def load(self):
         """
-        Load model from version history
-        :param version: index of the version to load, or None to load the most recent
+        Load model
         """
-        raise Exception('Not Implemented')
-    
+        try:
+            self.load_state_dict(torch.load(self._model_path + 'weights/model.pt'))
+        except:
+            raise Exception('No pytorch data file')
+            
+        try:
+            with open(self._model_path + 'weights/epochs_trained.txt', 'r') as f:
+                self.epochs_trained = int(f.read())
+        except:
+            raise Exception('Epochs trained missing')
+    def save_exists(self):
+        return os.path.exists(self._model_path + 'weights/model.pt')
+
     def test(self):
         """
-        Tests the model and prints the results (losses)
+        Tests the model on the test set and prints the results (losses)
         """
-        raise Exception('Not Implemented')
+        self.to(self.device)
     
-    def train(self):
+    def train_an_epoch(self):
         """
         Train model one more epoch
         """
-        raise Exception('Not Implemented')
-    
-    
-    def predict(self, texts):
+        self.epochs_trained += 1
+        self.to(self.device)
+        
+    def evaluate(self, epoch):
         """
-        Returns the predicted values. Type is based on its feature
+        Evaluates the model from the testing data and saves the results into the results path
         """
-        raise Exception('Not Implemented')
+        pass
+    
+    def train_loader(self, sample):
+        return torch.utils.data.DataLoader(
+            self.Dataset(train=True, sample=sample),
+            batch_size=self._batch_size, shuffle=True)
+    
+    def test_loader(self, sample):
+        return torch.utils.data.DataLoader(
+            self.Dataset(train=False, sample=sample),
+            batch_size=self._batch_size, shuffle=True)
         
     @property
     def _model_path(self):
@@ -55,20 +87,8 @@ class BaseModel(nn.Module):
     def _weight_path(self):
         return self._model_path + '/weights/'
     @property
-    def _stats_path(self):
-        return self._model_path + '/stats/'
+    def _results_path(self):
+        return self._model_path + '/results/'
     
-    def evaluate(self, epoch):
-        """
-        Evaluates the model from the testing data and saves the results into the stats path
-        """
-        raise Exception('Not Implemented')
+    
             
-    def save(self):
-        """
-        Save the model into the specified output path.
-        This function is abstract and must be defined by the subclasses
-        :param output_path: the path to save into
-        """
-        
-        raise Exception('Not implemented')

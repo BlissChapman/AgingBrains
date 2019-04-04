@@ -7,6 +7,10 @@ import re
 
 class Dataset(data.Dataset):
     """Face ages dataset."""
+    
+    width = 128
+    height = 128
+    channels = 1
 
     def __init__(self, train, sample=False):
         """
@@ -27,7 +31,7 @@ class Dataset(data.Dataset):
            
         split_idx = int(len(files) * 0.8)
         self.subset = files[:split_idx] if self.train else files[split_idx:]
-
+        
     def __len__(self):
         return len(self.subset)
 

@@ -4,6 +4,7 @@
 **/*.pt
 **/*.gif
 models/**/results/**
+models/**/weights/**
 
 # Byte-compiled / optimized / DLL files
 **/__pycache__/**
