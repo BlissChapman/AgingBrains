@@ -2,6 +2,7 @@ import argparse
 
 from models import GreyUTKFaceAgeClassifier
 from models import GreyUTKFaceVAE
+from tqdm import tqdm
 
 from utils import device
 
@@ -39,7 +40,7 @@ elif model.save_exists():
         exit()
     
 # Train model
-for e in range(1, args.epochs + 1):
+for e in tqdm(range(1, args.epochs + 1)):
     print("Epoch: {}".format(e))
     train_loss = model.train_an_epoch(sample=args.sample)
     print('Train loss: {}'.format(train_loss))
