@@ -40,8 +40,8 @@ elif model.save_exists():
         exit()
     
 # Train model
-for e in tqdm(range(1, args.epochs + 1)):
-    print("Epoch: {}".format(e))
+for e in range(1, args.epochs + 1):
+    print("Epoch: {}".format(e + model.epochs_trained))
     train_loss = model.train_an_epoch(sample=args.sample)
     print('Train loss: {}'.format(train_loss))
     test_loss = model.test(sample=args.sample)

@@ -9,6 +9,7 @@ from torch.nn import functional as F
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
 from utils import device
+from tqdm import tqdm
 
 from models import BaseModel
 
@@ -91,7 +92,7 @@ class Model(BaseModel):
         
         self.train()
         train_loss = 0
-        for batch_idx, (data, _) in enumerate(train_loader):
+        for data, _ in tqdm(train_loader):
             data = data.to(self.device)
             self.optimizer.zero_grad()
             recon_batch, mu, logvar = self(data)
