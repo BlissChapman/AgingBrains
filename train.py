@@ -40,16 +40,24 @@ elif model.save_exists():
         exit()
     
 # Train model
+old_epochs_trained = model.epochs_trained
 for e in range(1, args.epochs + 1):
-    print("Epoch: {}".format(e + model.epochs_trained))
+    print("Epoch: {}".format(e + old_epochs_trained))
     train_loss = model.train_an_epoch(sample=args.sample)
     print('Train loss: {}'.format(train_loss))
-    test_loss = model.test(sample=args.sample)
-    print('Test loss: {}'.format(test_loss))    
-    model.evaluate()
     
-    if e % 5 == 0 and e > 0:
+    if e % args.log_interval == 0 and e > 0:
+        
+        # Test
+        test_loss = model.test(sample=args.sample)
+        print('Test loss: {}'.format(test_loss))    
+        
+        # Evaluate
+        model.evaluate()
+        
+        # Save
         model.save()
         print("Model saved")
+        
 model.save()
 print("Model saved")

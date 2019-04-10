@@ -24,13 +24,17 @@ class Model(BaseModel):
         # (W−F+2P)/S+1
         # 1x128x128
         self.convs = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=(5,5), stride=2, padding=2),
+            nn.Conv2d(1, 32, kernel_size=(5,5), stride=2, padding=2, bias=False),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=(5,5), stride=2, padding=2),
+            nn.Conv2d(32, 64, kernel_size=(5,5), stride=2, padding=2, bias=False),
+            nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.Conv2d(64, 128, kernel_size=(5,5), stride=2, padding=2),
+            nn.Conv2d(64, 128, kernel_size=(5,5), stride=2, padding=2, bias=False),
+            nn.BatchNorm2d(128),
             nn.ReLU(),
-            nn.Conv2d(128, 256, kernel_size=(5,5), stride=2, padding=2),
+            nn.Conv2d(128, 256, kernel_size=(5,5), stride=2, padding=2, bias=False),
+            nn.BatchNorm2d(256),
             nn.ReLU()
         )
         
@@ -39,13 +43,17 @@ class Model(BaseModel):
         self.fc_reshape = nn.Linear(self.latent_space, 256 * 8 * 8)
         
         self.deconvs = nn.Sequential(
-            nn.ConvTranspose2d(256, 128, kernel_size=(5,5), stride=2, padding=2, output_padding=1),
+            nn.ConvTranspose2d(256, 128, kernel_size=(5,5), stride=2, padding=2, output_padding=1, bias=False),
+            nn.BatchNorm2d(128),
             nn.ReLU(),
-            nn.ConvTranspose2d(128, 64, kernel_size=(5,5), stride=2, padding=2, output_padding=1),
+            nn.ConvTranspose2d(128, 64, kernel_size=(5,5), stride=2, padding=2, output_padding=1, bias=False),
+            nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.ConvTranspose2d(64, 32, kernel_size=(5,5), stride=2, padding=2, output_padding=1),
+            nn.ConvTranspose2d(64, 32, kernel_size=(5,5), stride=2, padding=2, output_padding=1, bias=False),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
-            nn.ConvTranspose2d(32, 1, kernel_size=(5,5), stride=2, padding=2, output_padding=1)
+            nn.ConvTranspose2d(32, 1, kernel_size=(5,5), stride=2, padding=2, output_padding=1, bias=False),
+            nn.BatchNorm2d(1),
         )
         
         self.optimizer = optim.Adam(self.parameters(), lr=1e-3)

@@ -33,21 +33,21 @@ class BaseModel(nn.Module):
         with open(self._model_path + 'weights/epochs_trained.txt', 'w') as f:
             f.write(str(self.epochs_trained))
             
-        
     def load(self):
         """
         Load model
         """
         try:
             self.load_state_dict(torch.load(self._model_path + 'weights/model.pt'))
-        except:
-            raise Exception('No pytorch data file')
+        except Exception as e:
+            print(e)
             
         try:
             with open(self._model_path + 'weights/epochs_trained.txt', 'r') as f:
                 self.epochs_trained = int(f.read())
         except:
             raise Exception('Epochs trained missing')
+            
     def save_exists(self):
         return os.path.exists(self._model_path + 'weights/model.pt')
 
