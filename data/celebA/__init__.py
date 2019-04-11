@@ -26,7 +26,7 @@ class Dataset(FaceDataset):
         
         if self.sample:
             print("WARNING: Sample of 512 files is being taken.")
-            self.df = self.df.sample(1000)
+            self.df = self.df.iloc[:512]
         
     def __len__(self):
         return len(self.df)

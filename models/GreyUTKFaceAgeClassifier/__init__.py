@@ -6,7 +6,7 @@ from torch.autograd import Variable, grad
 from torch.nn import functional as F
 
 from models import BaseModel
-from processed_data import GreyUTKFace
+from data import UTKFace
 from tqdm import tqdm
 from utils import device
 
@@ -14,7 +14,7 @@ from utils import device
 class Model(BaseModel):
     
     def __init__(self, device):
-        super().__init__('GreyUTKFaceAgeClassifier', GreyUTKFace.Dataset, device)
+        super().__init__('GreyUTKFaceAgeClassifier', UTKFace.Dataset, size=200, device=device)
                 
         self._batch_size = 32
         self.conv_layers = nn.Sequential(

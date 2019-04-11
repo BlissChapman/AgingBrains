@@ -7,7 +7,6 @@ import re
 import pandas as pd
 
 class FaceDataset(data.Dataset):
-    """CelebA"""
 
     def __init__(self, train, size, grey=False, sample=False):
         """
@@ -28,27 +27,27 @@ class FaceDataset(data.Dataset):
         # numpy image: H x W x C
         # torch image: C X H X W
         image = io.imread(img_path, as_grey=self.grey)
+        if self.grey:
+            image = np.expand_dims(image, axis=-1)
         
         # Crop it to a square
         def crop_center(img,cropx,cropy):
-            y,x = img.shape
+            y,x,_ = img.shape
             startx = x//2-(cropx//2)
             starty = y//2-(cropy//2)    
-            return img[starty:starty+cropy,startx:startx+cropx]
+            return img[starty:starty+cropy,startx:startx+cropx,:]
        
         limiting_dim = min(image.shape[0], image.shape[1])
         image = crop_center(image, limiting_dim, limiting_dim)
         
         # Resize it
-        image = transform.resize(image, (self.size, self.size))
+        image = transform.resize(image, (self.size, self.size), mode='reflect')
         
-        if self.grey:
-            image = np.expand_dims(image, axis=0)
-        else:
-            image = image.transpose((2, 0, 1))
+        image = image.transpose((2, 0, 1))
+            
             
         # Scale it down to 0-1
-        image = torch.from_numpy(image).float() / 255
+        image = torch.from_numpy(image).float()
 
         return image
 

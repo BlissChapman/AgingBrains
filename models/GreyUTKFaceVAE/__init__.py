@@ -3,7 +3,7 @@ import shutil
 import torch
 import torch.utils.data
 
-from processed_data import GreyUTKFace
+from data import UTKFace
 from torch import nn, optim
 from torch.nn import functional as F
 from torchvision import datasets, transforms
@@ -17,7 +17,7 @@ from models import BaseModel
 class Model(BaseModel):
     
     def __init__(self, device):
-        super().__init__('GreyUTKFaceVAE', GreyUTKFace.Dataset, device)
+        super().__init__('GreyUTKFaceVAE', UTKFace.Dataset, input_size=200, device=device)
         
         self.latent_space = 50
 
@@ -138,7 +138,7 @@ class Model(BaseModel):
             recon_batch, mu, logvar = self(data)
             n = min(data.size(0), 8)
             comparison = torch.cat([data[:n],
-                                  recon_batch.view(self._batch_size, 1, self.Dataset.width, self.Dataset.height)[:n]])
+                                  recon_batch.view(self._batch_size, 1, self.input_size, self.input_size)[:n]])
             save_image(comparison.cpu(), 
                        self._results_path + 'reconstruction_' + str(self.epochs_trained) + '.png', nrow=n)
             break
@@ -147,5 +147,5 @@ class Model(BaseModel):
         with torch.no_grad():
             sample = torch.randn(64, self.latent_space).to(device)
             sample = self.decode(sample).cpu()
-            save_image(sample.view(64, 1, self.Dataset.width, self.Dataset.height),
+            save_image(sample.view(64, 1, self.input_size, self.input_size),
                        self._results_path + 'sample_' + str(self.epochs_trained) + '.png')

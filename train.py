@@ -2,6 +2,7 @@ import argparse
 
 from models import GreyUTKFaceAgeClassifier
 from models import GreyUTKFaceVAE
+from models import GreyCelebAVAE
 from tqdm import tqdm
 
 from utils import device
@@ -14,8 +15,8 @@ parser.add_argument('--sample', action='store_true', default=False,
                     help='Sample a small set of the data to make it run faster. Useful for debugging')
 parser.add_argument('--epochs', type=int, default=10,
                     help='number of epochs to train (default: 10)')
-parser.add_argument('--log-interval', type=int, default=10,
-                    help='how many batches to wait before logging training status (default: 10)')
+parser.add_argument('--log-interval', type=int, default=1,
+                    help='how many batches to wait before logging training status (default: 1)')
 parser.add_argument('--load', action='store_true', default=False,
                     help='whether or not to load the trained weights of the model')
 args = parser.parse_args()
@@ -26,6 +27,8 @@ if args.model_type == "GreyUTKFaceAgeClassifier":
     model = GreyUTKFaceAgeClassifier.Model(device)
 elif args.model_type == "GreyUTKFaceVAE":
     model = GreyUTKFaceVAE.Model(device)
+elif args.model_type == "GreyCelebAVAE":
+    model = GreyCelebAVAE.Model(device)
 else:
     print("Unknown model type: `{0}`".format(args.model_type))
     exit(1)
@@ -46,7 +49,7 @@ for e in range(1, args.epochs + 1):
     train_loss = model.train_an_epoch(sample=args.sample)
     print('Train loss: {}'.format(train_loss))
     
-    if e % args.log_interval == 0 and e > 0:
+    if e % args.log_interval == 0:
         
         # Test
         test_loss = model.test(sample=args.sample)

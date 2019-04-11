@@ -12,7 +12,7 @@ from torchvision.utils import save_image
 import os
 
 class BaseModel(nn.Module):
-    def __init__(self, model_name, Dataset, device):
+    def __init__(self, model_name, Dataset, input_size, device):
         """
         Constructor for a model
         """
@@ -23,13 +23,18 @@ class BaseModel(nn.Module):
         self.device = device
         self.epochs_trained = 0
         self._batch_size = 128
+        self.input_size = input_size
 
         
     def save(self):
         """
         Save the model into the specified output path.
         """
-        torch.save(self.state_dict(), self._model_path + 'weights/model.pt')
+        weight_path = self._model_path + 'weights/'
+        if not os.path.exists(weight_path):
+            os.makedirs(weight_path)
+            
+        torch.save(self.state_dict(), weight_path + 'model.pt')
         with open(self._model_path + 'weights/epochs_trained.txt', 'w') as f:
             f.write(str(self.epochs_trained))
             
@@ -68,17 +73,19 @@ class BaseModel(nn.Module):
         """
         Evaluates the model from the testing data and saves the results into the results path
         """
-        pass
+        results_path = self._model_path + 'results/'
+        if not os.path.exists(results_path):
+            os.makedirs(results_path)
     
     def train_loader(self, sample):
         return torch.utils.data.DataLoader(
-            self.Dataset(train=True, sample=sample),
-            batch_size=self._batch_size, shuffle=True)
+            self.Dataset(train=True, sample=sample, size=self.input_size, grey=True),
+            batch_size=self._batch_size, shuffle=True, num_workers=4)
     
     def test_loader(self, sample):
         return torch.utils.data.DataLoader(
-            self.Dataset(train=False, sample=sample),
-            batch_size=self._batch_size, shuffle=True)
+            self.Dataset(train=False, sample=sample, size=self.input_size, grey=True),
+            batch_size=self._batch_size, shuffle=True, num_workers=4)
         
     @property
     def _model_path(self):
