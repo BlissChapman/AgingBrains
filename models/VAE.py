@@ -11,7 +11,6 @@ class VAE(nn.Module):
         self.latent_space = 50
 
         # (W−F+2P)/S+1
-        # 1x128x128
         self.convs = nn.Sequential(
             nn.Conv2d(1, 16, kernel_size=(5,5), stride=2, padding=2, bias=False),
             nn.BatchNorm2d(16),

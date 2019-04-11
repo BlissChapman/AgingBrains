@@ -1,3 +1,3 @@
 from models.VAE import VAE
 from models.SmallVAE import SmallVAE
-from models.LinearRegression import LinearRegression
+from models.Regression import Regression
