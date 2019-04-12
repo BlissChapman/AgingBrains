@@ -6,10 +6,11 @@ class UTKFace(datasets.ImageFolder):
         root_dir = 'data/UTKFace/age/'
         target_transform = self.age_target_transform
         
-        label = label.lower()
-        if label == 'gender':
-            root_dir = 'data/UTKFace/gender/'
-            target_transform = self.gender_target_transform
+        if label is not None:
+            label = label.lower()
+            if label == 'gender':
+                root_dir = 'data/UTKFace/gender/'
+                target_transform = self.gender_target_transform
             
         super().__init__(root=root_dir, transform=transform, target_transform=target_transform)
         
