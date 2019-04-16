@@ -10,14 +10,11 @@ class UTKFace(datasets.ImageFolder):
             label = label.lower()
             if label == 'gender':
                 root_dir = 'data/UTKFace/gender/'
-                target_transform = self.gender_target_transform
+                target_transform = None
             
-        super().__init__(root=root_dir, transform=transform, target_transform=target_transform)
+        super().__init__(root=root_dir,
+                         transform=transform,
+                         target_transform=target_transform)
         
     def age_target_transform(self, idx):
         return int(self.classes[idx])
-    
-    def gender_target_transform(self, idx):
-        foo = torch.zeros(2, dtype=torch.float)
-        foo[idx] = 1
-        return foo
