@@ -1,16 +1,16 @@
 import torch
-from torch import nn
-from torch import optim
+from torch import nn, optim
 from torch.nn import functional as F
 
-class VAE(nn.Module):
+class FaderAE(nn.Module):
     
-    def __init__(self, num_channels=1):
+    def __init__(self, num_attributes, num_channels=1):
         super().__init__()
         
         self.input_size = 256
         self.latent_space = 50
         self.num_channels = num_channels
+        self.num_attributes = num_attributes
 
         # (W−F+2P)/S+1
         self.convs = nn.Sequential(
@@ -31,9 +31,12 @@ class VAE(nn.Module):
             nn.ReLU()
         )
         
-        self.fc_mu = nn.Linear(256 * 8 * 8, self.latent_space)
-        self.fc_logvar = nn.Linear(256 * 8 * 8, self.latent_space)
-        self.fc_reshape = nn.Linear(self.latent_space, 256 * 8 * 8)
+        self.to_latent = nn.Linear(256 * 8 * 8, self.latent_space)
+        
+        self.from_latent = nn.Sequential(
+            nn.Linear(self.latent_space + self.num_attributes, 256 * 8 * 8),
+            nn.ReLU()
+        )
         
         self.deconvs = nn.Sequential(
             nn.ConvTranspose2d(256, 128, kernel_size=(5,5), stride=2, padding=2, output_padding=1, bias=False),
@@ -51,40 +54,28 @@ class VAE(nn.Module):
             nn.ConvTranspose2d(16, num_channels, kernel_size=(5,5), stride=2, padding=2, output_padding=1, bias=False),
             nn.Sigmoid()
         )
+        self.optimizer = optim.Adam(self.parameters(), lr=1e-3)
         
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         
     def encode(self, x):
         out = self.convs(x)
         out = out.view(-1, 256 * 8 * 8)
-        return self.fc_mu(out), self.fc_logvar(out)
+        out = self.to_latent(out)
+        return out
 
-    def reparameterize(self, mu, logvar):
-        std = torch.exp(0.5*logvar)
-        eps = torch.randn_like(std)
-        return mu + eps*std
+    def decode(self, z, attributes):
+        attributes = attributes.view(-1, self.num_attributes).float()
 
-    def decode(self, z):
-        out = F.relu(self.fc_reshape(z))
+        h = torch.cat((z, attributes), 1) 
+        out = self.from_latent(h)
         out = out.view(-1, 256, 8, 8)
         out = self.deconvs(out)
         return out
 
-    def forward(self, x):
-        mu, logvar = self.encode(x)
-        z = self.reparameterize(mu, logvar)
-        return self.decode(z), mu, logvar
-    
-    def loss(self, recon_x, x, mu, logvar):
+    def loss(self, recon_x, x):
         
-        # Reconstruction + KL divergence losses summed over all elements and batch
+        # Reconstruction losses summed over all elements and batch
         BCE = F.binary_cross_entropy(recon_x, x.view(-1, self.num_channels, self.input_size, self.input_size), reduction='sum')
 
-        # see Appendix B from VAE paper:
-        # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
-        # https://arxiv.org/abs/1312.6114
-        # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-        KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-
-        return BCE + KLD
+        return BCE
     
