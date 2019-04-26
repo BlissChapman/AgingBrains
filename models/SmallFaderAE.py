@@ -11,15 +11,19 @@ class SmallFaderAE(nn.Module):
         self.num_attributes = num_attributes
 
         # (W−F+2P)/S+1
-        # 1x128x128
         self.encoder = nn.Sequential(
             nn.Linear(784, 400),
             nn.ReLU(),
-            nn.Linear(400, self.latent_space)
+            nn.Linear(400, 200),
+            nn.ReLU(),
+            nn.Linear(200, self.latent_space)
         )
         
         self.decoder = nn.Sequential(
-            nn.Linear(self.latent_space + num_attributes, 400),
+            nn.Linear(self.latent_space + num_attributes, 200),
+            nn.ReLU(),
+            nn.Linear(200, 400),
+            nn.ReLU(),
             nn.Linear(400, 784),
             nn.Sigmoid(),
         )
