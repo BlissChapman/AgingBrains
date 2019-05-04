@@ -4,4 +4,4 @@ from models.SimpleClassifier import SimpleClassifier
 from models.AutoEncoder import AutoEncoder
 from models.FaderAE import FaderAE
 from models.SmallFaderAE import SmallFaderAE
-from models.LatentDiscriminator import LatentDiscriminator
+from models.Classifier import Classifier

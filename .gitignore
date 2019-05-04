@@ -4,6 +4,8 @@
 **/*.png
 **/*.pt
 **/*.gif
+**/*.gz
+**/*.npy
 models/**/results/**
 models/**/weights/**
 

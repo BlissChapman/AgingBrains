@@ -54,7 +54,6 @@ class FaderAE(nn.Module):
             nn.ConvTranspose2d(16, num_channels, kernel_size=(5,5), stride=2, padding=2, output_padding=1, bias=False),
             nn.Sigmoid()
         )
-        self.optimizer = optim.Adam(self.parameters(), lr=1e-3)
         
         
     def encode(self, x):
