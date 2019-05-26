@@ -1,4 +1,5 @@
 from models.VAE import VAE
+from models.StyleVAE import StyleVAE
 from models.SmallVAE import SmallVAE
 from models.SimpleClassifier import SimpleClassifier
 from models.AutoEncoder import AutoEncoder
